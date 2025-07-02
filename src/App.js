@@ -4,6 +4,56 @@ import { Calendar, Plus, Check, User, Home, Dumbbell, Users, Target, Brain, Hear
 const App = () => {
   const [currentView, setCurrentView] = useState('home');
   const [todayCompleted, setTodayCompleted] = useState(new Set());
+const [chain, setChain] = useState([]);
+
+// Load and save data
+useEffect(() => {
+  const savedChain = localStorage.getItem('fortified_chain');
+  const savedCompleted = localStorage.getItem('fortified_completed');
+  
+  if (savedChain) {
+    setChain(JSON.parse(savedChain));
+  } else {
+    initializeChain();
+  }
+  
+  if (savedCompleted) {
+    setTodayCompleted(new Set(JSON.parse(savedCompleted)));
+  }
+}, []);
+
+useEffect(() => {
+  localStorage.setItem('fortified_chain', JSON.stringify(chain));
+}, [chain]);
+
+useEffect(() => {
+  localStorage.setItem('fortified_completed', JSON.stringify([...todayCompleted]));
+}, [todayCompleted]);
+
+const initializeChain = () => {
+  const emptyChain = Array.from({ length: 40 }, (_, index) => ({
+    id: index + 1,
+    type: 'empty',
+    date: null,
+    activity: `Day ${index + 1}`,
+    isEmpty: true
+  }));
+
+  const sampleProgress = [
+    { id: 1, type: 'strength', date: '2025-06-29', activity: 'Push-ups & Squats', isEmpty: false },
+    { id: 2, type: 'mental', date: '2025-06-29', activity: 'Morning Meditation', isEmpty: false },
+    { id: 3, type: 'missed', date: '2025-06-28', activity: 'Missed Day', isEmpty: false },
+    { id: 4, type: 'nutrition', date: '2025-06-27', activity: 'Protein Goal Met', isEmpty: false },
+    { id: 5, type: 'nature', date: '2025-06-26', activity: 'Nature Walk', isEmpty: false },
+  ];
+
+  const chainWithProgress = emptyChain.map((slot) => {
+    const progress = sampleProgress.find(p => p.id === slot.id);
+    return progress || slot;
+  });
+
+  setChain(chainWithProgress);
+};
   const [user] = useState({
     name: 'Marcus',
     streak: 12,
