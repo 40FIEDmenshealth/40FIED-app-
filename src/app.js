@@ -1,4 +1,7 @@
-</div>
+import React, { useState, useEffect } from 'react';
+import { ChevronRight, Target, Users, BookOpen, Calendar, Plus, Check, User, Home, Dumbbell, Brain, Heart, Utensils, Eye, Youtube, Star } from 'lucide-react';
+
+const FortifiedApp = () => {</div>
      </div>
 
      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
