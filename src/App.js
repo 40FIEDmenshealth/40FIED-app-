@@ -299,3 +299,127 @@ const App = () => {
       </div>
     </div>
   );
+const TrainView = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">Training Programs</h2>
+        <div className="text-sm text-gray-500">
+          {user.plan === 'free' ? 'Free Plan' : 'Premium Plan'}
+        </div>
+      </div>
+      
+      <div className="grid gap-4">
+        {programs.map((program) => {
+          const typeInfo = activityTypes[program.type];
+          const IconComponent = typeInfo.icon;
+          const isLocked = program.isPremium && user.plan === 'free';
+          
+          return (
+            <div 
+              key={program.id} 
+              onClick={() => !isLocked && setSelectedProgram(program)}
+              className={`bg-white rounded-xl p-6 shadow-sm border border-gray-100 transition-all duration-200 ${
+                isLocked 
+                  ? 'opacity-75 cursor-not-allowed' 
+                  : 'hover:border-orange-300 hover:shadow-md cursor-pointer transform hover:scale-[1.01]'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className={`w-14 h-14 ${typeInfo.color} rounded-xl flex items-center justify-center shadow-sm relative`}>
+                    <IconComponent className="w-7 h-7 text-white" />
+                    {isLocked && (
+                      <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
+                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <h3 className="font-semibold text-lg text-gray-900">{program.title}</h3>
+                      {program.isPremium && (
+                        <span className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs px-2 py-1 rounded-full">
+                          Premium
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-gray-600 mb-2">{program.description}</p>
+                    <div className="flex items-center space-x-4 text-sm">
+                      <span className="text-orange-600 font-medium">{program.duration}</span>
+                      <span className="text-gray-500">{program.modules.length} modules</span>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        program.difficulty === 'Beginner' ? 'bg-green-100 text-green-700' :
+                        program.difficulty === 'Intermediate' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {program.difficulty}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight className={`w-5 h-5 ${isLocked ? 'text-gray-300' : 'text-gray-400'}`} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {user.plan === 'free' && (
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-6 border border-orange-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-orange-900 mb-1">Unlock All Programs</h3>
+              <p className="text-orange-700 text-sm">Get access to advanced programs and personal coaching</p>
+            </div>
+            <button 
+              onClick={() => setShowPayment(true)}
+              className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium"
+            >
+              Upgrade
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const ConnectView = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">Connect & Community</h2>
+      
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h3 className="font-semibold text-lg mb-4">Success Stories</h3>
+        <div className="space-y-4">
+          {[
+            { name: 'Dave M.', age: 45, story: 'Lost 15 lbs and gained confidence with micro-workouts!', streak: 28 },
+            { name: 'Mark R.', age: 42, story: 'Finally sleeping 7+ hours consistently. Game changer.', streak: 21 },
+            { name: 'Tony L.', age: 48, story: 'Meditation helped me handle work stress so much better.', streak: 35 }
+          ].map((story, index) => (
+            <div key={index} className="border-l-4 border-orange-500 pl-4 bg-orange-50/50 p-3 rounded-r-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-gray-900">{story.name}, {story.age}</span>
+                <span className="text-sm text-orange-600 font-medium">{story.streak} day streak</span>
+              </div>
+              <p className="text-gray-700">{story.story}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h3 className="font-semibold text-lg mb-4">Find Your Accountability Buddy</h3>
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-4 border border-blue-100">
+          <h4 className="font-medium mb-2">Get Matched with Someone Like You</h4>
+          <p className="text-gray-700 mb-3 text-sm">Connect with men in your area who share similar goals and schedules</p>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">47 men waiting for matches</span>
+            <button className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors font-medium">
+              Find My Buddy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
