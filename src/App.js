@@ -226,13 +226,9 @@ const App = () => {
     if (savedPosts) {
       setBuddyPosts(JSON.parse(savedPosts));
     } else {
-      const samplePosts = [
-        { id: 1, name: 'Mike T.', location: 'Melbourne, VIC', experience: 'Beginner', goals: 'Weight loss and building strength', contact: 'mike.t@email.com', date: '2025-07-08', day: 15 },
-        { id: 2, name: 'Dave R.', location: 'Sydney, NSW', experience: 'Intermediate', goals: 'Staying consistent and motivated', contact: 'dave.runner@email.com', date: '2025-07-07', day: 8 },
-        { id: 3, name: 'James K.', location: 'Brisbane, QLD', experience: 'Beginner', goals: 'Getting back into fitness after 40', contact: 'jkennedy@email.com', date: '2025-07-06', day: 22 }
-      ];
-      setBuddyPosts(samplePosts);
-      localStorage.setItem('buddy_posts', JSON.stringify(samplePosts));
+      // Start with empty buddy board - no fake/example posts
+      setBuddyPosts([]);
+      localStorage.setItem('buddy_posts', JSON.stringify([]));
     }
   };
 
