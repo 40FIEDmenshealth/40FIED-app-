@@ -222,14 +222,12 @@ const App = () => {
   }, [isLoggedIn]);
 
   const loadBuddyPosts = () => {
-    const savedPosts = localStorage.getItem('buddy_posts');
-    if (savedPosts) {
-      setBuddyPosts(JSON.parse(savedPosts));
-    } else {
-      // Start with empty buddy board - no fake/example posts
-      setBuddyPosts([]);
-      localStorage.setItem('buddy_posts', JSON.stringify([]));
-    }
+    // Clear any existing fake data from localStorage
+    localStorage.removeItem('buddy_posts');
+    
+    // Always start with empty buddy board - no fake/example posts
+    setBuddyPosts([]);
+    localStorage.setItem('buddy_posts', JSON.stringify([]));
   };
 
   const loadUserData = (email) => {
