@@ -1,25 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Check, User, Home, Users, Youtube, Facebook, BookOpen, Target, Dumbbell, Brain, Heart, Eye } from 'lucide-react';
+import { Calendar, Plus, Check, User, Home, Users, Youtube, Facebook, BookOpen, Target, Dumbbell, Brain, Heart, Eye, Mail, UserPlus } from 'lucide-react';
 
 const App = () => {
   const [currentView, setCurrentView] = useState('home');
   const [chain, setChain] = useState([]);
   const [todayCompleted, setTodayCompleted] = useState(new Set());
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginStep, setLoginStep] = useState('email'); // 'email', 'register', 'welcome'
+  const [loginData, setLoginData] = useState({
+    email: '',
+    name: ''
+  });
   const [user, setUser] = useState({
-    name: 'User',
-    streak: 12,
-    currentDay: 1
+    name: '',
+    email: '',
+    streak: 0,
+    currentDay: 1,
+    joinDate: null
   });
 
-  // Load data from localStorage
+  // Check if user is logged in on app start
   useEffect(() => {
     const savedUser = localStorage.getItem('fortified_user');
-    const savedChain = localStorage.getItem('fortified_chain');
-    const savedCompleted = localStorage.getItem('fortified_completed');
-    
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const userData = JSON.parse(savedUser);
+      setUser(userData);
+      setIsLoggedIn(true);
+      loadUserData(userData.email);
     }
+  }, []);
+
+  // Save user data when it changes
+  useEffect(() => {
+    if (isLoggedIn) {
+      localStorage.setItem('fortified_user', JSON.stringify(user));
+      saveUserData();
+    }
+  }, [user, isLoggedIn]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      localStorage.setItem(`fortified_chain_${user.email}`, JSON.stringify(chain));
+    }
+  }, [chain, isLoggedIn, user.email]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      localStorage.setItem(`fortified_completed_${user.email}`, JSON.stringify([...todayCompleted]));
+    }
+  }, [todayCompleted, isLoggedIn, user.email]);
+
+  const loadUserData = (email) => {
+    const savedChain = localStorage.getItem(`fortified_chain_${email}`);
+    const savedCompleted = localStorage.getItem(`fortified_completed_${email}`);
     
     if (savedChain) {
       setChain(JSON.parse(savedChain));
@@ -30,20 +64,63 @@ const App = () => {
     if (savedCompleted) {
       setTodayCompleted(new Set(JSON.parse(savedCompleted)));
     }
-  }, []);
+  };
 
-  // Save data to localStorage
-  useEffect(() => {
-    localStorage.setItem('fortified_user', JSON.stringify(user));
-  }, [user]);
+  const saveUserData = () => {
+    // In a real app, this would sync to a backend
+    // For now, we're simulating cloud storage with localStorage
+    const userData = {
+      ...user,
+      lastActive: new Date().toISOString()
+    };
+    localStorage.setItem(`user_profile_${user.email}`, JSON.stringify(userData));
+  };
 
-  useEffect(() => {
-    localStorage.setItem('fortified_chain', JSON.stringify(chain));
-  }, [chain]);
+  const handleEmailSubmit = () => {
+    const existingUser = localStorage.getItem(`user_profile_${loginData.email}`);
+    
+    if (existingUser) {
+      // Existing user - log them in
+      const userData = JSON.parse(existingUser);
+      setUser(userData);
+      setIsLoggedIn(true);
+      setShowLogin(false);
+      loadUserData(loginData.email);
+    } else {
+      // New user - show registration
+      setLoginStep('register');
+    }
+  };
 
-  useEffect(() => {
-    localStorage.setItem('fortified_completed', JSON.stringify([...todayCompleted]));
-  }, [todayCompleted]);
+  const handleRegistration = () => {
+    const newUser = {
+      name: loginData.name,
+      email: loginData.email,
+      streak: 0,
+      currentDay: 1,
+      joinDate: new Date().toISOString()
+    };
+    
+    setUser(newUser);
+    setIsLoggedIn(true);
+    setLoginStep('welcome');
+    initializeChain();
+    
+    // Auto-close welcome after 3 seconds
+    setTimeout(() => {
+      setShowLogin(false);
+      setLoginStep('email');
+    }, 3000);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUser({ name: '', email: '', streak: 0, currentDay: 1, joinDate: null });
+    setChain([]);
+    setTodayCompleted(new Set());
+    localStorage.removeItem('fortified_user');
+    setShowLogin(true);
+  };
 
   const initializeChain = () => {
     const emptyChain = Array.from({ length: 40 }, (_, index) => ({
@@ -53,20 +130,7 @@ const App = () => {
       activity: `Day ${index + 1}`,
       isEmpty: true
     }));
-
-    // Sample progress for demo
-    const sampleProgress = [
-      { id: 1, type: 'completed', date: '2025-07-08', activity: 'Workout Complete', isEmpty: false },
-      { id: 2, type: 'completed', date: '2025-07-09', activity: 'Workout Complete', isEmpty: false },
-      { id: 3, type: 'missed', date: '2025-07-10', activity: 'Missed Day', isEmpty: false },
-    ];
-
-    const chainWithProgress = emptyChain.map((slot) => {
-      const progress = sampleProgress.find(p => p.id === slot.id);
-      return progress || slot;
-    });
-
-    setChain(chainWithProgress);
+    setChain(emptyChain);
   };
 
   const activityTypes = {
@@ -93,6 +157,126 @@ const App = () => {
         setUser(prev => ({ ...prev, currentDay: prev.currentDay + 1, streak: prev.streak + 1 }));
       }
     }
+  };
+
+  const LoginSystem = () => {
+    if (!showLogin) return null;
+
+    const EmailStep = () => (
+      <div className="space-y-6">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <UserPlus className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to 40FIED</h2>
+          <p className="text-gray-600">Enter your email to start your 40-day journey</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+          <input
+            type="email"
+            value={loginData.email}
+            onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="your.email@example.com"
+            autoFocus
+          />
+        </div>
+
+        <button
+          onClick={handleEmailSubmit}
+          disabled={!loginData.email || !loginData.email.includes('@')}
+          className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Continue
+        </button>
+      </div>
+    );
+
+    const RegisterStep = () => (
+      <div className="space-y-6">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <User className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
+          <p className="text-gray-600">You're new here! Let's get you set up.</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <input
+            type="email"
+            value={loginData.email}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
+            disabled
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+          <input
+            type="text"
+            value={loginData.name}
+            onChange={(e) => setLoginData(prev => ({ ...prev, name: e.target.value }))}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="Enter your first name"
+            autoFocus
+          />
+        </div>
+
+        <div className="flex space-x-3">
+          <button
+            onClick={() => setLoginStep('email')}
+            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          >
+            Back
+          </button>
+          <button
+            onClick={handleRegistration}
+            disabled={!loginData.name.trim()}
+            className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Start Challenge
+          </button>
+        </div>
+      </div>
+    );
+
+    const WelcomeStep = () => (
+      <div className="text-center space-y-6 py-8">
+        <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto">
+          <Check className="w-10 h-10 text-white" />
+        </div>
+        <div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Welcome aboard, {user.name}!</h3>
+          <p className="text-gray-600">Your 40-day transformation journey starts now.</p>
+        </div>
+        <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+          <p className="text-orange-800 font-medium mb-1">Ready to build lasting change?</p>
+          <p className="text-orange-700 text-sm">Complete your first workout to start building your chain!</p>
+        </div>
+      </div>
+    );
+
+    const renderStep = () => {
+      switch (loginStep) {
+        case 'register': return <RegisterStep />;
+        case 'welcome': return <WelcomeStep />;
+        default: return <EmailStep />;
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl max-w-md w-full">
+          <div className="p-6">
+            {renderStep()}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const ChainVisualization = () => (
@@ -246,7 +430,6 @@ const App = () => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Connect & Learn</h2>
       
-      {/* YouTube Channel */}
       <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-xl p-6 text-white">
         <div className="flex items-center space-x-4 mb-4">
           <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
@@ -266,7 +449,6 @@ const App = () => {
         </button>
       </div>
 
-      {/* Facebook Community */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white">
         <div className="flex items-center space-x-4 mb-4">
           <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
@@ -286,7 +468,6 @@ const App = () => {
         </button>
       </div>
 
-      {/* Living 40FIED Book */}
       <div className="bg-gradient-to-r from-orange-600 to-amber-600 rounded-xl p-6 text-white">
         <div className="flex items-center space-x-4 mb-4">
           <div className="w-16 h-16 bg-black rounded-lg flex-shrink-0 overflow-hidden shadow-lg">
@@ -322,6 +503,13 @@ const App = () => {
     }
   };
 
+  // Show login if not logged in
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setShowLogin(true);
+    }
+  }, [isLoggedIn]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b border-gray-100">
@@ -336,39 +524,53 @@ const App = () => {
             <div className="flex items-center space-x-2">
               <User className="w-5 h-5 text-gray-600" />
               <span className="text-sm font-medium text-gray-700">{user.name}</span>
+              {isLoggedIn && (
+                <button
+                  onClick={handleLogout}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Logout
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6 pb-20">
-        {renderCurrentView()}
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-        <div className="max-w-md mx-auto">
-          <div className="flex items-center justify-around py-2">
-            {[
-              { id: 'home', icon: Home, label: 'Chain' },
-              { id: 'buddy', icon: Users, label: 'Buddy' },
-              { id: 'connect', icon: BookOpen, label: 'Connect' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setCurrentView(tab.id)}
-                className={`flex flex-col items-center space-y-1 py-3 px-6 rounded-xl transition-all duration-200 ${
-                  currentView === tab.id 
-                    ? 'text-orange-600 bg-orange-50 shadow-sm transform scale-105' 
-                    : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50'
-                }`}
-              >
-                <tab.icon className="w-5 h-5" />
-                <span className="text-xs font-medium">{tab.label}</span>
-              </button>
-            ))}
+      {isLoggedIn && (
+        <>
+          <div className="max-w-md mx-auto px-4 py-6 pb-20">
+            {renderCurrentView()}
           </div>
-        </div>
-      </div>
+
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+            <div className="max-w-md mx-auto">
+              <div className="flex items-center justify-around py-2">
+                {[
+                  { id: 'home', icon: Home, label: 'Chain' },
+                  { id: 'buddy', icon: Users, label: 'Buddy' },
+                  { id: 'connect', icon: BookOpen, label: 'Connect' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setCurrentView(tab.id)}
+                    className={`flex flex-col items-center space-y-1 py-3 px-6 rounded-xl transition-all duration-200 ${
+                      currentView === tab.id 
+                        ? 'text-orange-600 bg-orange-50 shadow-sm transform scale-105' 
+                        : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50'
+                    }`}
+                  >
+                    <tab.icon className="w-5 h-5" />
+                    <span className="text-xs font-medium">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      <LoginSystem />
     </div>
   );
 };
