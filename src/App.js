@@ -721,9 +721,15 @@ const App = () => {
       <div className="bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-md mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-                <div className="text-white font-bold text-sm">4F</div>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
+                <svg viewBox="0 0 100 100" className="w-8 h-8">
+                  <circle cx="50" cy="50" r="50" fill="black"/>
+                  <circle cx="50" cy="50" r="40" fill="white"/>
+                  <text x="35" y="45" fill="black" fontSize="24" fontWeight="bold" fontFamily="Arial, sans-serif">4</text>
+                  <text x="55" y="45" fill="black" fontSize="24" fontWeight="bold" fontFamily="Arial, sans-serif">F</text>
+                  <text x="50" y="75" fill="black" fontSize="12" fontWeight="bold" fontFamily="Arial, sans-serif" textAnchor="middle">40FIED</text>
+                </svg>
               </div>
               <h1 className="text-xl font-bold text-gray-900">40FIED</h1>
             </div>
