@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Check, User, Home, Users, Youtube, Facebook, BookOpen, Target, Dumbbell, Brain, Heart, Eye, Mail, UserPlus } from 'lucide-react';
+import { Calendar, Plus, Check, User, Home, Users, Youtube, Facebook, BookOpen, Dumbbell, Eye, UserPlus, MapPin, Clock } from 'lucide-react';
 
 const App = () => {
   const [currentView, setCurrentView] = useState('home');
@@ -7,87 +7,79 @@ const App = () => {
   const [todayCompleted, setTodayCompleted] = useState(new Set());
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-  const [loginStep, setLoginStep] = useState('email'); // 'email', 'register', 'welcome'
-  const [loginData, setLoginData] = useState({
-    email: '',
-    name: ''
-  });
-  const [user, setUser] = useState({
-    name: '',
-    email: '',
-    streak: 0,
-    currentDay: 1,
-    joinDate: null
-  });
+  const [loginStep, setLoginStep] = useState('email');
+  const [showBuddyForm, setShowBuddyForm] = useState(false);
+  const [buddyPosts, setBuddyPosts] = useState([]);
+  const [loginData, setLoginData] = useState({ email: '', name: '' });
+  const [buddyFormData, setBuddyFormData] = useState({ location: '', experience: '', goals: '', contact: '' });
+  const [user, setUser] = useState({ name: '', email: '', streak: 0, currentDay: 1, joinDate: null });
 
-  // Check if user is logged in on app start
   useEffect(() => {
-    const savedUser = localStorage.getItem('fortified_user');
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setUser(userData);
+    const savedUser = JSON.parse(localStorage.getItem('fortified_user') || '{}');
+    if (savedUser.email) {
+      setUser(savedUser);
       setIsLoggedIn(true);
-      loadUserData(userData.email);
+      loadUserData(savedUser.email);
     }
+    loadBuddyPosts();
   }, []);
 
-  // Save user data when it changes
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && user.email) {
       localStorage.setItem('fortified_user', JSON.stringify(user));
-      saveUserData();
     }
   }, [user, isLoggedIn]);
 
   useEffect(() => {
-    if (isLoggedIn) {
-      localStorage.setItem(`fortified_chain_${user.email}`, JSON.stringify(chain));
+    if (!isLoggedIn) {
+      setShowLogin(true);
     }
-  }, [chain, isLoggedIn, user.email]);
+  }, [isLoggedIn]);
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      localStorage.setItem(`fortified_completed_${user.email}`, JSON.stringify([...todayCompleted]));
+  const loadBuddyPosts = () => {
+    const savedPosts = localStorage.getItem('buddy_posts');
+    if (savedPosts) {
+      setBuddyPosts(JSON.parse(savedPosts));
+    } else {
+      const samplePosts = [
+        { id: 1, name: 'Mike T.', location: 'Melbourne, VIC', experience: 'Beginner', goals: 'Weight loss and building strength', contact: 'mike.t@email.com', date: '2025-07-08', day: 15 },
+        { id: 2, name: 'Dave R.', location: 'Sydney, NSW', experience: 'Intermediate', goals: 'Staying consistent and motivated', contact: 'dave.runner@email.com', date: '2025-07-07', day: 8 },
+        { id: 3, name: 'James K.', location: 'Brisbane, QLD', experience: 'Beginner', goals: 'Getting back into fitness after 40', contact: 'jkennedy@email.com', date: '2025-07-06', day: 22 }
+      ];
+      setBuddyPosts(samplePosts);
+      localStorage.setItem('buddy_posts', JSON.stringify(samplePosts));
     }
-  }, [todayCompleted, isLoggedIn, user.email]);
+  };
 
   const loadUserData = (email) => {
     const savedChain = localStorage.getItem(`fortified_chain_${email}`);
-    const savedCompleted = localStorage.getItem(`fortified_completed_${email}`);
-    
     if (savedChain) {
       setChain(JSON.parse(savedChain));
     } else {
       initializeChain();
     }
-    
-    if (savedCompleted) {
-      setTodayCompleted(new Set(JSON.parse(savedCompleted)));
-    }
   };
 
-  const saveUserData = () => {
-    // In a real app, this would sync to a backend
-    // For now, we're simulating cloud storage with localStorage
-    const userData = {
-      ...user,
-      lastActive: new Date().toISOString()
-    };
-    localStorage.setItem(`user_profile_${user.email}`, JSON.stringify(userData));
+  const initializeChain = () => {
+    const emptyChain = Array.from({ length: 40 }, (_, index) => ({
+      id: index + 1,
+      type: 'empty',
+      date: null,
+      activity: `Day ${index + 1}`,
+      isEmpty: true
+    }));
+    setChain(emptyChain);
   };
 
   const handleEmailSubmit = () => {
     const existingUser = localStorage.getItem(`user_profile_${loginData.email}`);
-    
     if (existingUser) {
-      // Existing user - log them in
       const userData = JSON.parse(existingUser);
       setUser(userData);
       setIsLoggedIn(true);
       setShowLogin(false);
       loadUserData(loginData.email);
     } else {
-      // New user - show registration
       setLoginStep('register');
     }
   };
@@ -100,13 +92,10 @@ const App = () => {
       currentDay: 1,
       joinDate: new Date().toISOString()
     };
-    
     setUser(newUser);
     setIsLoggedIn(true);
     setLoginStep('welcome');
     initializeChain();
-    
-    // Auto-close welcome after 3 seconds
     setTimeout(() => {
       setShowLogin(false);
       setLoginStep('email');
@@ -122,27 +111,27 @@ const App = () => {
     setShowLogin(true);
   };
 
-  const initializeChain = () => {
-    const emptyChain = Array.from({ length: 40 }, (_, index) => ({
-      id: index + 1,
-      type: 'empty',
-      date: null,
-      activity: `Day ${index + 1}`,
-      isEmpty: true
-    }));
-    setChain(emptyChain);
-  };
-
-  const activityTypes = {
-    completed: { color: 'bg-green-500', icon: Check, label: 'Workout Complete' },
-    missed: { color: 'bg-red-500', icon: Eye, label: 'Missed Day' },
-    empty: { color: 'bg-gray-200 border-2 border-gray-300 border-dashed', icon: Plus, label: 'Day Pending' }
+  const handleBuddyPost = () => {
+    const newPost = {
+      id: Date.now(),
+      name: user.name,
+      location: buddyFormData.location,
+      experience: buddyFormData.experience,
+      goals: buddyFormData.goals,
+      contact: buddyFormData.contact,
+      date: new Date().toISOString().split('T')[0],
+      day: user.currentDay
+    };
+    const updatedPosts = [newPost, ...buddyPosts];
+    setBuddyPosts(updatedPosts);
+    localStorage.setItem('buddy_posts', JSON.stringify(updatedPosts));
+    setBuddyFormData({ location: '', experience: '', goals: '', contact: '' });
+    setShowBuddyForm(false);
   };
 
   const completeWorkout = () => {
     if (!todayCompleted.has('today')) {
       setTodayCompleted(prev => new Set([...prev, 'today']));
-      
       const nextEmptyIndex = chain.findIndex(link => link.isEmpty);
       if (nextEmptyIndex !== -1) {
         const updatedChain = [...chain];
@@ -159,171 +148,178 @@ const App = () => {
     }
   };
 
+  const activityTypes = {
+    completed: { color: 'bg-green-500', icon: Check },
+    missed: { color: 'bg-red-500', icon: Eye },
+    empty: { color: 'bg-gray-200 border-2 border-gray-300 border-dashed', icon: Plus }
+  };
+
   const LoginSystem = () => {
     if (!showLogin) return null;
 
-    const EmailStep = () => (
-      <div className="space-y-6">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <UserPlus className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to 40FIED</h2>
-          <p className="text-gray-600">Enter your email to start your 40-day journey</p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-          <input
-            type="email"
-            value={loginData.email}
-            onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            placeholder="your.email@example.com"
-            autoFocus
-          />
-        </div>
-
-        <button
-          onClick={handleEmailSubmit}
-          disabled={!loginData.email || !loginData.email.includes('@')}
-          className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Continue
-        </button>
-      </div>
-    );
-
-    const RegisterStep = () => (
-      <div className="space-y-6">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
-          <p className="text-gray-600">You're new here! Let's get you set up.</p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-          <input
-            type="email"
-            value={loginData.email}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
-            disabled
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
-          <input
-            type="text"
-            value={loginData.name}
-            onChange={(e) => setLoginData(prev => ({ ...prev, name: e.target.value }))}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            placeholder="Enter your first name"
-            autoFocus
-          />
-        </div>
-
-        <div className="flex space-x-3">
-          <button
-            onClick={() => setLoginStep('email')}
-            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-          >
-            Back
-          </button>
-          <button
-            onClick={handleRegistration}
-            disabled={!loginData.name.trim()}
-            className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Start Challenge
-          </button>
-        </div>
-      </div>
-    );
-
-    const WelcomeStep = () => (
-      <div className="text-center space-y-6 py-8">
-        <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto">
-          <Check className="w-10 h-10 text-white" />
-        </div>
-        <div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Welcome aboard, {user.name}!</h3>
-          <p className="text-gray-600">Your 40-day transformation journey starts now.</p>
-        </div>
-        <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-          <p className="text-orange-800 font-medium mb-1">Ready to build lasting change?</p>
-          <p className="text-orange-700 text-sm">Complete your first workout to start building your chain!</p>
-        </div>
-      </div>
-    );
-
-    const renderStep = () => {
-      switch (loginStep) {
-        case 'register': return <RegisterStep />;
-        case 'welcome': return <WelcomeStep />;
-        default: return <EmailStep />;
-      }
-    };
-
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-xl max-w-md w-full">
-          <div className="p-6">
-            {renderStep()}
-          </div>
+        <div className="bg-white rounded-xl max-w-md w-full p-6">
+          {loginStep === 'email' && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <UserPlus className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to 40FIED</h2>
+                <p className="text-gray-600">Enter your email to start your 40-day journey</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                <input
+                  type="email"
+                  value={loginData.email}
+                  onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  placeholder="your.email@example.com"
+                />
+              </div>
+              <button
+                onClick={handleEmailSubmit}
+                disabled={!loginData.email || !loginData.email.includes('@')}
+                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
+              >
+                Continue
+              </button>
+            </div>
+          )}
+
+          {loginStep === 'register' && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <User className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
+                <p className="text-gray-600">You're new here! Let's get you set up.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input type="email" value={loginData.email} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" disabled />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+                <input
+                  type="text"
+                  value={loginData.name}
+                  onChange={(e) => setLoginData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  placeholder="Enter your first name"
+                />
+              </div>
+              <div className="flex space-x-3">
+                <button onClick={() => setLoginStep('email')} className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                  Back
+                </button>
+                <button
+                  onClick={handleRegistration}
+                  disabled={!loginData.name.trim()}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
+                >
+                  Start Challenge
+                </button>
+              </div>
+            </div>
+          )}
+
+          {loginStep === 'welcome' && (
+            <div className="text-center space-y-6 py-8">
+              <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto">
+                <Check className="w-10 h-10 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Welcome aboard, {user.name}!</h3>
+                <p className="text-gray-600">Your 40-day transformation journey starts now.</p>
+              </div>
+              <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                <p className="text-orange-800 font-medium mb-1">Ready to build lasting change?</p>
+                <p className="text-orange-700 text-sm">Complete your first workout to start building your chain!</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
-  const ChainVisualization = () => (
-    <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-xl p-6 mb-6 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent"></div>
-      <div className="relative">
-        <h3 className="text-white text-xl font-bold mb-2">40FIED Challenge - Don't Break the Chain!</h3>
-        <p className="text-gray-300 text-sm mb-6">Complete 40 workouts in 40 days</p>
-        
-        <div className="grid grid-cols-10 gap-1.5 mb-6">
-          {chain.map((link, index) => {
-            const typeInfo = activityTypes[link.type];
-            const isMissed = link.type === 'missed';
-            const isEmpty = link.isEmpty;
-            const IconComponent = typeInfo.icon;
-            
-            return (
-              <div key={link.id} className="relative group">
-                <div className={`w-8 h-8 ${typeInfo.color} rounded-lg flex items-center justify-center transform hover:scale-110 transition-all duration-200 ${
-                  isMissed ? 'animate-pulse shadow-lg shadow-red-500/25' : ''
-                } ${!isEmpty ? 'shadow-lg' : ''}`}>
-                  <IconComponent className={`w-3.5 h-3.5 ${isEmpty ? 'text-gray-400' : 'text-white'} ${isMissed ? 'animate-pulse' : ''}`} />
-                </div>
-                <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-black/90 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                  {isEmpty ? `Day ${index + 1}` : link.activity}
-                </div>
+  const BuddyFormModal = () => {
+    if (!showBuddyForm) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Find Training Buddy</h2>
+              <button onClick={() => setShowBuddyForm(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Your Location</label>
+                <input
+                  type="text"
+                  value={buddyFormData.location}
+                  onChange={(e) => setBuddyFormData(prev => ({ ...prev, location: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  placeholder="e.g. Melbourne, VIC"
+                />
               </div>
-            );
-          })}
-        </div>
-        
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-gray-300 text-sm">
-            Progress: <span className="text-orange-400 font-bold text-lg">{chain.filter(link => !link.isEmpty).length}/40</span> days
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Experience Level</label>
+                <select
+                  value={buddyFormData.experience}
+                  onChange={(e) => setBuddyFormData(prev => ({ ...prev, experience: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">Select experience level</option>
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Your Goals</label>
+                <textarea
+                  value={buddyFormData.goals}
+                  onChange={(e) => setBuddyFormData(prev => ({ ...prev, goals: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  placeholder="What are you hoping to achieve?"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Info</label>
+                <input
+                  type="text"
+                  value={buddyFormData.contact}
+                  onChange={(e) => setBuddyFormData(prev => ({ ...prev, contact: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  placeholder="Email or phone number"
+                />
+              </div>
+            </div>
+            <div className="flex space-x-3 mt-6">
+              <button onClick={() => setShowBuddyForm(false)} className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                Cancel
+              </button>
+              <button
+                onClick={handleBuddyPost}
+                disabled={!buddyFormData.location || !buddyFormData.experience || !buddyFormData.goals || !buddyFormData.contact}
+                className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
+              >
+                Post to Board
+              </button>
+            </div>
           </div>
-          <div className="text-gray-300 text-sm">
-            Current Streak: <span className="text-green-400 font-bold text-lg">{user.streak}</span> days
-          </div>
-        </div>
-        
-        <div className="bg-gray-800/50 rounded-lg p-4 border-l-4 border-orange-500">
-          <p className="text-orange-300 text-sm font-medium">40 consecutive workouts builds lasting change.</p>
-          <p className="text-gray-400 text-xs mt-1">Champions don't break the chain!</p>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const HomeView = () => (
     <div className="space-y-6">
@@ -335,7 +331,46 @@ const App = () => {
         </div>
       </div>
 
-      <ChainVisualization />
+      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-xl p-6 mb-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent"></div>
+        <div className="relative">
+          <h3 className="text-white text-xl font-bold mb-2">40FIED Challenge - Don't Break the Chain!</h3>
+          <p className="text-gray-300 text-sm mb-6">Complete 40 workouts in 40 days</p>
+          
+          <div className="grid grid-cols-10 gap-1.5 mb-6">
+            {chain.map((link, index) => {
+              const typeInfo = activityTypes[link.type];
+              const isEmpty = link.isEmpty;
+              const IconComponent = typeInfo.icon;
+              
+              return (
+                <div key={link.id} className="relative group">
+                  <div className={`w-8 h-8 ${typeInfo.color} rounded-lg flex items-center justify-center transform hover:scale-110 transition-all duration-200 ${!isEmpty ? 'shadow-lg' : ''}`}>
+                    <IconComponent className={`w-3.5 h-3.5 ${isEmpty ? 'text-gray-400' : 'text-white'}`} />
+                  </div>
+                  <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-black/90 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                    {isEmpty ? `Day ${index + 1}` : link.activity}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-gray-300 text-sm">
+              Progress: <span className="text-orange-400 font-bold text-lg">{chain.filter(link => !link.isEmpty).length}/40</span> days
+            </div>
+            <div className="text-gray-300 text-sm">
+              Current Streak: <span className="text-green-400 font-bold text-lg">{user.streak}</span> days
+            </div>
+          </div>
+          
+          <div className="bg-gray-800/50 rounded-lg p-4 border-l-4 border-orange-500">
+            <p className="text-orange-300 text-sm font-medium">40 consecutive workouts builds lasting change.</p>
+            <p className="text-gray-400 text-xs mt-1">Champions don't break the chain!</p>
+          </div>
+        </div>
+      </div>
 
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <h3 className="text-xl font-semibold mb-4 flex items-center">
@@ -385,43 +420,84 @@ const App = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <h3 className="font-semibold text-lg mb-4">Find Your Accountability Partner</h3>
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
-          <h4 className="font-bold text-lg mb-3">Get Matched with Someone Like You</h4>
-          <p className="text-gray-700 mb-4">Connect with other men doing the 40FIED challenge. Share progress, stay motivated, and push each other to success.</p>
+          <h4 className="font-bold text-lg mb-3">Connect with Other 40FIED Members</h4>
+          <p className="text-gray-700 mb-4">Post to the buddy board or browse other members looking for training partners.</p>
           
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="bg-white/60 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-blue-600">47</div>
-              <div className="text-xs text-gray-600">Active Members</div>
+              <div className="text-2xl font-bold text-blue-600">{buddyPosts.length}</div>
+              <div className="text-xs text-gray-600">Active Posts</div>
             </div>
             <div className="bg-white/60 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-green-600">12</div>
-              <div className="text-xs text-gray-600">Looking for Partners</div>
+              <div className="text-2xl font-bold text-green-600">{buddyPosts.filter(post => post.day < 20).length}</div>
+              <div className="text-xs text-gray-600">New Members</div>
             </div>
           </div>
 
-          <button className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 px-6 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-bold">
-            Find My Training Buddy
+          <button 
+            onClick={() => setShowBuddyForm(true)}
+            className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 px-6 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-bold"
+          >
+            Post to Buddy Board
           </button>
         </div>
       </div>
 
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h3 className="font-semibold text-lg mb-4">Success Stories</h3>
-        <div className="space-y-4">
-          {[
-            { name: 'Dave M.', age: 45, story: 'My buddy kept me accountable through all 40 days. Lost 15 lbs!', streak: 40 },
-            { name: 'Mark R.', age: 42, story: 'Having a training partner made all the difference. Crushed the challenge!', streak: 40 },
-            { name: 'Tony L.', age: 48, story: 'We pushed each other every single day. Best decision I made.', streak: 40 }
-          ].map((story, index) => (
-            <div key={index} className="border-l-4 border-orange-500 pl-4 bg-orange-50/50 p-4 rounded-r-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-bold text-gray-900">{story.name}, {story.age}</span>
-                <span className="text-sm text-orange-600 font-bold">✅ {story.streak} DAYS</span>
+        <h3 className="font-semibold text-lg mb-4">Buddy Board</h3>
+        
+        {buddyPosts.length === 0 ? (
+          <div className="text-center py-8">
+            <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-600">No posts yet. Be the first to find a buddy!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {buddyPosts.slice(0, 10).map((post) => (
+              <div key={post.id} className="border border-gray-200 rounded-lg p-4 hover:border-orange-300 transition-colors">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900">{post.name}</h4>
+                      <div className="flex items-center text-sm text-gray-600 space-x-3">
+                        <span className="flex items-center">
+                          <MapPin className="w-3 h-3 mr-1" />
+                          {post.location}
+                        </span>
+                        <span className="flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          Day {post.day}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    post.experience === 'Beginner' ? 'bg-green-100 text-green-700' :
+                    post.experience === 'Intermediate' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {post.experience}
+                  </span>
+                </div>
+                
+                <p className="text-gray-700 mb-3 text-sm italic">"{post.goals}"</p>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Posted {new Date(post.date).toLocaleDateString()}</span>
+                  <button 
+                    onClick={() => window.open(`mailto:${post.contact}?subject=40FIED Training Buddy&body=Hi ${post.name}, I saw your post on the 40FIED buddy board and would love to connect!`, '_blank')}
+                    className="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600 transition-colors"
+                  >
+                    Connect
+                  </button>
+                </div>
               </div>
-              <p className="text-gray-700 italic">"{story.story}"</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -429,7 +505,7 @@ const App = () => {
   const ConnectView = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Connect & Learn</h2>
-      
+     
       <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-xl p-6 text-white">
         <div className="flex items-center space-x-4 mb-4">
           <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
@@ -461,7 +537,7 @@ const App = () => {
         </div>
         <p className="mb-4 opacity-95">Connect with other members, share your progress, and get motivation from the community.</p>
         <button 
-          onClick={() => window.open('https://facebook.com/groups/40fied', '_blank')}
+          onClick={() => window.open('https://www.facebook.com/40fiedmenshealth', '_blank')}
           className="bg-white text-blue-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors"
         >
           Join Community →
@@ -486,7 +562,7 @@ const App = () => {
         </div>
         <p className="mb-4 opacity-95">The complete guide to building strength, resilience, and lasting change after 40.</p>
         <button 
-          onClick={() => window.open('https://amazon.com/living-40fied', '_blank')}
+          onClick={() => window.open('https://books.by/tamasfinta', '_blank')}
           className="bg-white text-orange-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors"
         >
           Get the Book - $24.99 →
@@ -502,13 +578,6 @@ const App = () => {
       default: return <HomeView />;
     }
   };
-
-  // Show login if not logged in
-  useEffect(() => {
-    if (!isLoggedIn) {
-      setShowLogin(true);
-    }
-  }, [isLoggedIn]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -548,7 +617,7 @@ const App = () => {
               <div className="flex items-center justify-around py-2">
                 {[
                   { id: 'home', icon: Home, label: 'Chain' },
-                  { id: 'buddy', icon: Users, label: 'Buddy' },
+                  { id: 'buddy', icon: Users, label: 'Training Buddy' },
                   { id: 'connect', icon: BookOpen, label: 'Connect' }
                 ].map((tab) => (
                   <button
@@ -571,6 +640,7 @@ const App = () => {
       )}
 
       <LoginSystem />
+      <BuddyFormModal />
     </div>
   );
 };
