@@ -1,5 +1,100 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Calendar, Plus, Check, User, Home, Users, Youtube, Facebook, BookOpen, Dumbbell, Eye, UserPlus, MapPin, Clock } from 'lucide-react';
+
+// Move components outside to prevent recreation on every render
+const EmailStep = ({ loginData, setLoginData, handleEmailSubmit }) => (
+  <div className="space-y-6">
+    <div className="text-center">
+      <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+        <UserPlus className="w-8 h-8 text-white" />
+      </div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to 40FIED</h2>
+      <p className="text-gray-600">Enter your email to start your 40-day journey</p>
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+      <input
+        type="email"
+        value={loginData.email}
+        onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+        placeholder="your.email@example.com"
+        autoComplete="email"
+      />
+    </div>
+    <button
+      onClick={handleEmailSubmit}
+      disabled={!loginData.email || !loginData.email.includes('@')}
+      className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
+    >
+      Continue
+    </button>
+  </div>
+);
+
+const RegisterStep = ({ loginData, setLoginData, setLoginStep, handleRegistration }) => (
+  <div className="space-y-6">
+    <div className="text-center">
+      <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+        <User className="w-8 h-8 text-white" />
+      </div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
+      <p className="text-gray-600">You're new here! Let's get you set up.</p>
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+      <input 
+        type="email" 
+        value={loginData.email} 
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" 
+        disabled 
+        autoComplete="email"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+      <input
+        type="text"
+        value={loginData.name}
+        onChange={(e) => setLoginData(prev => ({ ...prev, name: e.target.value }))}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+        placeholder="Enter your first name"
+        autoComplete="given-name"
+      />
+    </div>
+    <div className="flex space-x-3">
+      <button 
+        onClick={() => setLoginStep('email')} 
+        className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+      >
+        Back
+      </button>
+      <button
+        onClick={handleRegistration}
+        disabled={!loginData.name.trim()}
+        className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
+      >
+        Start Challenge
+      </button>
+    </div>
+  </div>
+);
+
+const WelcomeStep = ({ user }) => (
+  <div className="text-center space-y-6 py-8">
+    <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto">
+      <Check className="w-10 h-10 text-white" />
+    </div>
+    <div>
+      <h3 className="text-2xl font-bold text-gray-900 mb-2">Welcome aboard, {user.name}!</h3>
+      <p className="text-gray-600">Your 40-day transformation journey starts now.</p>
+    </div>
+    <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+      <p className="text-orange-800 font-medium mb-1">Ready to build lasting change?</p>
+      <p className="text-orange-700 text-sm">Complete your first workout to start building your chain!</p>
+    </div>
+  </div>
+);
 
 const App = () => {
   const [currentView, setCurrentView] = useState('home');
@@ -28,7 +123,7 @@ const App = () => {
     if (isLoggedIn && user.email) {
       localStorage.setItem('fortified_user', JSON.stringify(user));
     }
-  }, [user, isLoggedIn]);
+  }, [user.streak, user.currentDay, isLoggedIn]); // Only update on specific changes
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -71,7 +166,7 @@ const App = () => {
     setChain(emptyChain);
   };
 
-  const handleEmailSubmit = () => {
+  const handleEmailSubmit = useCallback(() => {
     const existingUser = localStorage.getItem(`user_profile_${loginData.email}`);
     if (existingUser) {
       const userData = JSON.parse(existingUser);
@@ -82,9 +177,9 @@ const App = () => {
     } else {
       setLoginStep('register');
     }
-  };
+  }, [loginData.email]);
 
-  const handleRegistration = () => {
+  const handleRegistration = useCallback(() => {
     const newUser = {
       name: loginData.name,
       email: loginData.email,
@@ -100,18 +195,18 @@ const App = () => {
       setShowLogin(false);
       setLoginStep('email');
     }, 3000);
-  };
+  }, [loginData.name, loginData.email]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setIsLoggedIn(false);
     setUser({ name: '', email: '', streak: 0, currentDay: 1, joinDate: null });
     setChain([]);
     setTodayCompleted(new Set());
     localStorage.removeItem('fortified_user');
     setShowLogin(true);
-  };
+  }, []);
 
-  const handleBuddyPost = () => {
+  const handleBuddyPost = useCallback(() => {
     const newPost = {
       id: Date.now(),
       name: user.name,
@@ -127,9 +222,9 @@ const App = () => {
     localStorage.setItem('buddy_posts', JSON.stringify(updatedPosts));
     setBuddyFormData({ location: '', experience: '', goals: '', contact: '' });
     setShowBuddyForm(false);
-  };
+  }, [user.name, user.currentDay, buddyFormData, buddyPosts]);
 
-  const completeWorkout = () => {
+  const completeWorkout = useCallback(() => {
     if (!todayCompleted.has('today')) {
       setTodayCompleted(prev => new Set([...prev, 'today']));
       const nextEmptyIndex = chain.findIndex(link => link.isEmpty);
@@ -146,7 +241,7 @@ const App = () => {
         setUser(prev => ({ ...prev, currentDay: prev.currentDay + 1, streak: prev.streak + 1 }));
       }
     }
-  };
+  }, [todayCompleted, chain]);
 
   const activityTypes = {
     completed: { color: 'bg-green-500', icon: Check },
@@ -161,86 +256,22 @@ const App = () => {
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-xl max-w-md w-full p-6">
           {loginStep === 'email' && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <UserPlus className="w-8 h-8 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to 40FIED</h2>
-                <p className="text-gray-600">Enter your email to start your 40-day journey</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                <input
-                  type="email"
-                  value={loginData.email}
-                  onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="your.email@example.com"
-                />
-              </div>
-              <button
-                onClick={handleEmailSubmit}
-                disabled={!loginData.email || !loginData.email.includes('@')}
-                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
-              >
-                Continue
-              </button>
-            </div>
+            <EmailStep 
+              loginData={loginData}
+              setLoginData={setLoginData}
+              handleEmailSubmit={handleEmailSubmit}
+            />
           )}
-
           {loginStep === 'register' && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="w-8 h-8 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
-                <p className="text-gray-600">You're new here! Let's get you set up.</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <input type="email" value={loginData.email} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" disabled />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
-                <input
-                  type="text"
-                  value={loginData.name}
-                  onChange={(e) => setLoginData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="Enter your first name"
-                />
-              </div>
-              <div className="flex space-x-3">
-                <button onClick={() => setLoginStep('email')} className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
-                  Back
-                </button>
-                <button
-                  onClick={handleRegistration}
-                  disabled={!loginData.name.trim()}
-                  className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
-                >
-                  Start Challenge
-                </button>
-              </div>
-            </div>
+            <RegisterStep 
+              loginData={loginData}
+              setLoginData={setLoginData}
+              setLoginStep={setLoginStep}
+              handleRegistration={handleRegistration}
+            />
           )}
-
           {loginStep === 'welcome' && (
-            <div className="text-center space-y-6 py-8">
-              <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto">
-                <Check className="w-10 h-10 text-white" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Welcome aboard, {user.name}!</h3>
-                <p className="text-gray-600">Your 40-day transformation journey starts now.</p>
-              </div>
-              <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                <p className="text-orange-800 font-medium mb-1">Ready to build lasting change?</p>
-                <p className="text-orange-700 text-sm">Complete your first workout to start building your chain!</p>
-              </div>
-            </div>
+            <WelcomeStep user={user} />
           )}
         </div>
       </div>
