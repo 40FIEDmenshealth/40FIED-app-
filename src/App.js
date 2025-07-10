@@ -95,19 +95,19 @@ const NameForm = memo(({ email, onSubmit, onBack }) => {
   );
 });
 
-const BuddyForm = memo(({ userName, currentDay, onSubmit, onCancel }) => {
+const BuddyForm = memo(({ userName, currentDay, onSubmit, onCancel, editingPost }) => {
   const [formData, setFormData] = useState({
-    location: '',
-    experience: '',
-    goals: '',
-    contact: ''
+    location: editingPost?.location || '',
+    experience: editingPost?.experience || '',
+    goals: editingPost?.goals || '',
+    contact: editingPost?.contact || ''
   });
 
   const handleSubmit = () => {
     onSubmit({
       ...formData,
-      name: userName,
-      day: currentDay
+      name: editingPost?.name || userName,
+      day: editingPost?.day || currentDay
     });
   };
 
@@ -120,9 +120,20 @@ const BuddyForm = memo(({ userName, currentDay, onSubmit, onCancel }) => {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Find Training Buddy</h2>
+        <h2 className="text-xl font-bold text-gray-900">
+          {editingPost ? 'Edit Post' : 'Find Training Buddy'}
+        </h2>
         <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">✕</button>
       </div>
+      
+      {editingPost && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700">
+            <strong>Editing post by:</strong> {editingPost.name} (Day {editingPost.day})
+          </p>
+        </div>
+      )}
+      
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Your Location</label>
@@ -180,7 +191,7 @@ const BuddyForm = memo(({ userName, currentDay, onSubmit, onCancel }) => {
           disabled={!isValid}
           className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
         >
-          Post to Board
+          {editingPost ? 'Update Post' : 'Post to Board'}
         </button>
       </div>
     </div>
@@ -196,6 +207,8 @@ const App = () => {
   const [loginStep, setLoginStep] = useState('email');
   const [loginEmail, setLoginEmail] = useState('');
   const [showBuddyForm, setShowBuddyForm] = useState(false);
+  const [editingPost, setEditingPost] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [buddyPosts, setBuddyPosts] = useState([]);
   const [user, setUser] = useState({
     name: '',
@@ -210,6 +223,8 @@ const App = () => {
     if (savedUser.email) {
       setUser(savedUser);
       setIsLoggedIn(true);
+      // Check if user is admin (coach/owner)
+      setIsAdmin(savedUser.email === 'coach@40fied.com' || savedUser.email === 'admin@40fied.com');
       loadUserData(savedUser.email);
     }
     loadBuddyPosts();
@@ -273,6 +288,8 @@ const App = () => {
       joinDate: new Date().toISOString()
     };
     setUser(newUser);
+    // Check if user is admin
+    setIsAdmin(loginEmail === 'coach@40fied.com' || loginEmail === 'admin@40fied.com');
     localStorage.setItem('fortified_user', JSON.stringify(newUser));
     localStorage.setItem(`user_profile_${loginEmail}`, JSON.stringify(newUser));
     setIsLoggedIn(true);
@@ -286,6 +303,7 @@ const App = () => {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setIsAdmin(false);
     setUser({ name: '', email: '', streak: 0, currentDay: 1, joinDate: null });
     setChain([]);
     setTodayCompleted(new Set());
@@ -295,20 +313,46 @@ const App = () => {
   };
 
   const handleBuddyPost = (postData) => {
-    const newPost = {
-      id: Date.now(),
-      name: postData.name,
-      location: postData.location,
-      experience: postData.experience,
-      goals: postData.goals,
-      contact: postData.contact,
-      date: new Date().toISOString().split('T')[0],
-      day: postData.day
-    };
-    const updatedPosts = [newPost, ...buddyPosts];
-    setBuddyPosts(updatedPosts);
-    localStorage.setItem('buddy_posts', JSON.stringify(updatedPosts));
+    if (editingPost) {
+      // Update existing post
+      const updatedPosts = buddyPosts.map(post => 
+        post.id === editingPost.id 
+          ? { ...editingPost, ...postData, date: new Date().toISOString().split('T')[0] }
+          : post
+      );
+      setBuddyPosts(updatedPosts);
+      localStorage.setItem('buddy_posts', JSON.stringify(updatedPosts));
+      setEditingPost(null);
+    } else {
+      // Create new post
+      const newPost = {
+        id: Date.now(),
+        name: postData.name,
+        location: postData.location,
+        experience: postData.experience,
+        goals: postData.goals,
+        contact: postData.contact,
+        date: new Date().toISOString().split('T')[0],
+        day: postData.day
+      };
+      const updatedPosts = [newPost, ...buddyPosts];
+      setBuddyPosts(updatedPosts);
+      localStorage.setItem('buddy_posts', JSON.stringify(updatedPosts));
+    }
     setShowBuddyForm(false);
+  };
+
+  const handleEditPost = (post) => {
+    setEditingPost(post);
+    setShowBuddyForm(true);
+  };
+
+  const handleDeletePost = (postId) => {
+    if (window.confirm('Are you sure you want to delete this post?')) {
+      const updatedPosts = buddyPosts.filter(post => post.id !== postId);
+      setBuddyPosts(updatedPosts);
+      localStorage.setItem('buddy_posts', JSON.stringify(updatedPosts));
+    }
   };
 
   const completeWorkout = () => {
@@ -384,8 +428,12 @@ const App = () => {
           <BuddyForm
             userName={user.name}
             currentDay={user.currentDay}
+            editingPost={editingPost}
             onSubmit={handleBuddyPost}
-            onCancel={() => setShowBuddyForm(false)}
+            onCancel={() => {
+              setShowBuddyForm(false);
+              setEditingPost(null);
+            }}
           />
         </div>
       </div>
@@ -558,12 +606,30 @@ const App = () => {
                 
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-500">Posted {new Date(post.date).toLocaleDateString()}</span>
-                  <button 
-                    onClick={() => window.open(`mailto:${post.contact}?subject=40FIED Training Buddy&body=Hi ${post.name}, I saw your post on the 40FIED buddy board and would love to connect!`, '_blank')}
-                    className="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600 transition-colors"
-                  >
-                    Connect
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    {isAdmin && (
+                      <>
+                        <button 
+                          onClick={() => handleEditPost(post)}
+                          className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDeletePost(post.id)}
+                          className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                    <button 
+                      onClick={() => window.open(`mailto:${post.contact}?subject=40FIED Training Buddy&body=Hi ${post.name}, I saw your post on the 40FIED buddy board and would love to connect!`, '_blank')}
+                      className="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600 transition-colors"
+                    >
+                      Connect
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
