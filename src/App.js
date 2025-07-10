@@ -1,100 +1,191 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { Calendar, Plus, Check, User, Home, Users, Youtube, Facebook, BookOpen, Dumbbell, Eye, UserPlus, MapPin, Clock } from 'lucide-react';
 
-// Move components outside to prevent recreation on every render
-const EmailStep = ({ loginData, setLoginData, handleEmailSubmit }) => (
-  <div className="space-y-6">
-    <div className="text-center">
-      <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-        <UserPlus className="w-8 h-8 text-white" />
-      </div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to 40FIED</h2>
-      <p className="text-gray-600">Enter your email to start your 40-day journey</p>
-    </div>
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-      <input
-        type="email"
-        value={loginData.email}
-        onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-        placeholder="your.email@example.com"
-        autoComplete="email"
-      />
-    </div>
-    <button
-      onClick={handleEmailSubmit}
-      disabled={!loginData.email || !loginData.email.includes('@')}
-      className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
-    >
-      Continue
-    </button>
-  </div>
-);
+// Separate memoized components for forms
+const EmailForm = memo(({ onSubmit }) => {
+  const [email, setEmail] = useState('');
+  
+  const handleSubmit = () => {
+    onSubmit(email);
+  };
 
-const RegisterStep = ({ loginData, setLoginData, setLoginStep, handleRegistration }) => (
-  <div className="space-y-6">
-    <div className="text-center">
-      <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-        <User className="w-8 h-8 text-white" />
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <UserPlus className="w-8 h-8 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to 40FIED</h2>
+        <p className="text-gray-600">Enter your email to start your 40-day journey</p>
       </div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
-      <p className="text-gray-600">You're new here! Let's get you set up.</p>
-    </div>
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-      <input 
-        type="email" 
-        value={loginData.email} 
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" 
-        disabled 
-        autoComplete="email"
-      />
-    </div>
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
-      <input
-        type="text"
-        value={loginData.name}
-        onChange={(e) => setLoginData(prev => ({ ...prev, name: e.target.value }))}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-        placeholder="Enter your first name"
-        autoComplete="given-name"
-      />
-    </div>
-    <div className="flex space-x-3">
-      <button 
-        onClick={() => setLoginStep('email')} 
-        className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-      >
-        Back
-      </button>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+          placeholder="your.email@example.com"
+          autoComplete="email"
+        />
+      </div>
       <button
-        onClick={handleRegistration}
-        disabled={!loginData.name.trim()}
-        className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
+        onClick={handleSubmit}
+        disabled={!email || !email.includes('@')}
+        className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
       >
-        Start Challenge
+        Continue
       </button>
     </div>
-  </div>
-);
+  );
+});
 
-const WelcomeStep = ({ user }) => (
-  <div className="text-center space-y-6 py-8">
-    <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto">
-      <Check className="w-10 h-10 text-white" />
+const NameForm = memo(({ email, onSubmit, onBack }) => {
+  const [name, setName] = useState('');
+  
+  const handleSubmit = () => {
+    onSubmit(name);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <User className="w-8 h-8 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
+        <p className="text-gray-600">You're new here! Let's get you set up.</p>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+        <input 
+          type="email" 
+          value={email} 
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" 
+          disabled 
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+          placeholder="Enter your first name"
+          autoComplete="given-name"
+        />
+      </div>
+      <div className="flex space-x-3">
+        <button 
+          onClick={onBack} 
+          className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+        >
+          Back
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={!name.trim()}
+          className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
+        >
+          Start Challenge
+        </button>
+      </div>
     </div>
-    <div>
-      <h3 className="text-2xl font-bold text-gray-900 mb-2">Welcome aboard, {user.name}!</h3>
-      <p className="text-gray-600">Your 40-day transformation journey starts now.</p>
+  );
+});
+
+const BuddyForm = memo(({ userName, currentDay, onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState({
+    location: '',
+    experience: '',
+    goals: '',
+    contact: ''
+  });
+
+  const handleSubmit = () => {
+    onSubmit({
+      ...formData,
+      name: userName,
+      day: currentDay
+    });
+  };
+
+  const updateField = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const isValid = formData.location && formData.experience && formData.goals && formData.contact;
+
+  return (
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-gray-900">Find Training Buddy</h2>
+        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">✕</button>
+      </div>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Your Location</label>
+          <input
+            type="text"
+            value={formData.location}
+            onChange={(e) => updateField('location', e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            placeholder="e.g. Melbourne, VIC"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Experience Level</label>
+          <select
+            value={formData.experience}
+            onChange={(e) => updateField('experience', e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="">Select experience level</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Your Goals</label>
+          <textarea
+            value={formData.goals}
+            onChange={(e) => updateField('goals', e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            placeholder="What are you hoping to achieve?"
+            rows={3}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Contact Info</label>
+          <input
+            type="text"
+            value={formData.contact}
+            onChange={(e) => updateField('contact', e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            placeholder="Email or phone number"
+          />
+        </div>
+      </div>
+      <div className="flex space-x-3 mt-6">
+        <button
+          onClick={onCancel}
+          className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={!isValid}
+          className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
+        >
+          Post to Board
+        </button>
+      </div>
     </div>
-    <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-      <p className="text-orange-800 font-medium mb-1">Ready to build lasting change?</p>
-      <p className="text-orange-700 text-sm">Complete your first workout to start building your chain!</p>
-    </div>
-  </div>
-);
+  );
+});
 
 const App = () => {
   const [currentView, setCurrentView] = useState('home');
@@ -103,11 +194,16 @@ const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginStep, setLoginStep] = useState('email');
+  const [loginEmail, setLoginEmail] = useState('');
   const [showBuddyForm, setShowBuddyForm] = useState(false);
   const [buddyPosts, setBuddyPosts] = useState([]);
-  const [loginData, setLoginData] = useState({ email: '', name: '' });
-  const [buddyFormData, setBuddyFormData] = useState({ location: '', experience: '', goals: '', contact: '' });
-  const [user, setUser] = useState({ name: '', email: '', streak: 0, currentDay: 1, joinDate: null });
+  const [user, setUser] = useState({
+    name: '',
+    email: '',
+    streak: 0,
+    currentDay: 1,
+    joinDate: null
+  });
 
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem('fortified_user') || '{}');
@@ -118,12 +214,6 @@ const App = () => {
     }
     loadBuddyPosts();
   }, []);
-
-  useEffect(() => {
-    if (isLoggedIn && user.email) {
-      localStorage.setItem('fortified_user', JSON.stringify(user));
-    }
-  }, [user.streak, user.currentDay, isLoggedIn]); // Only update on specific changes
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -166,28 +256,31 @@ const App = () => {
     setChain(emptyChain);
   };
 
-  const handleEmailSubmit = useCallback(() => {
-    const existingUser = localStorage.getItem(`user_profile_${loginData.email}`);
+  const handleEmailSubmit = (email) => {
+    setLoginEmail(email);
+    const existingUser = localStorage.getItem(`user_profile_${email}`);
     if (existingUser) {
       const userData = JSON.parse(existingUser);
       setUser(userData);
       setIsLoggedIn(true);
       setShowLogin(false);
-      loadUserData(loginData.email);
+      loadUserData(email);
     } else {
       setLoginStep('register');
     }
-  }, [loginData.email]);
+  };
 
-  const handleRegistration = useCallback(() => {
+  const handleNameSubmit = (name) => {
     const newUser = {
-      name: loginData.name,
-      email: loginData.email,
+      name: name,
+      email: loginEmail,
       streak: 0,
       currentDay: 1,
       joinDate: new Date().toISOString()
     };
     setUser(newUser);
+    localStorage.setItem('fortified_user', JSON.stringify(newUser));
+    localStorage.setItem(`user_profile_${loginEmail}`, JSON.stringify(newUser));
     setIsLoggedIn(true);
     setLoginStep('welcome');
     initializeChain();
@@ -195,36 +288,36 @@ const App = () => {
       setShowLogin(false);
       setLoginStep('email');
     }, 3000);
-  }, [loginData.name, loginData.email]);
+  };
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = () => {
     setIsLoggedIn(false);
     setUser({ name: '', email: '', streak: 0, currentDay: 1, joinDate: null });
     setChain([]);
     setTodayCompleted(new Set());
+    setLoginEmail('');
     localStorage.removeItem('fortified_user');
     setShowLogin(true);
-  }, []);
+  };
 
-  const handleBuddyPost = useCallback(() => {
+  const handleBuddyPost = (postData) => {
     const newPost = {
       id: Date.now(),
-      name: user.name,
-      location: buddyFormData.location,
-      experience: buddyFormData.experience,
-      goals: buddyFormData.goals,
-      contact: buddyFormData.contact,
+      name: postData.name,
+      location: postData.location,
+      experience: postData.experience,
+      goals: postData.goals,
+      contact: postData.contact,
       date: new Date().toISOString().split('T')[0],
-      day: user.currentDay
+      day: postData.day
     };
     const updatedPosts = [newPost, ...buddyPosts];
     setBuddyPosts(updatedPosts);
     localStorage.setItem('buddy_posts', JSON.stringify(updatedPosts));
-    setBuddyFormData({ location: '', experience: '', goals: '', contact: '' });
     setShowBuddyForm(false);
-  }, [user.name, user.currentDay, buddyFormData, buddyPosts]);
+  };
 
-  const completeWorkout = useCallback(() => {
+  const completeWorkout = () => {
     if (!todayCompleted.has('today')) {
       setTodayCompleted(prev => new Set([...prev, 'today']));
       const nextEmptyIndex = chain.findIndex(link => link.isEmpty);
@@ -238,10 +331,13 @@ const App = () => {
           isEmpty: false
         };
         setChain(updatedChain);
-        setUser(prev => ({ ...prev, currentDay: prev.currentDay + 1, streak: prev.streak + 1 }));
+        localStorage.setItem(`fortified_chain_${user.email}`, JSON.stringify(updatedChain));
+        const updatedUser = { ...user, currentDay: user.currentDay + 1, streak: user.streak + 1 };
+        setUser(updatedUser);
+        localStorage.setItem('fortified_user', JSON.stringify(updatedUser));
       }
     }
-  }, [todayCompleted, chain]);
+  };
 
   const activityTypes = {
     completed: { color: 'bg-green-500', icon: Check },
@@ -256,22 +352,29 @@ const App = () => {
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-xl max-w-md w-full p-6">
           {loginStep === 'email' && (
-            <EmailStep 
-              loginData={loginData}
-              setLoginData={setLoginData}
-              handleEmailSubmit={handleEmailSubmit}
-            />
+            <EmailForm onSubmit={handleEmailSubmit} />
           )}
           {loginStep === 'register' && (
-            <RegisterStep 
-              loginData={loginData}
-              setLoginData={setLoginData}
-              setLoginStep={setLoginStep}
-              handleRegistration={handleRegistration}
+            <NameForm 
+              email={loginEmail}
+              onSubmit={handleNameSubmit}
+              onBack={() => setLoginStep('email')}
             />
           )}
           {loginStep === 'welcome' && (
-            <WelcomeStep user={user} />
+            <div className="text-center space-y-6 py-8">
+              <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto">
+                <Check className="w-10 h-10 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Welcome aboard, {user.name}!</h3>
+                <p className="text-gray-600">Your 40-day transformation journey starts now.</p>
+              </div>
+              <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                <p className="text-orange-800 font-medium mb-1">Ready to build lasting change?</p>
+                <p className="text-orange-700 text-sm">Complete your first workout to start building your chain!</p>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -284,69 +387,12 @@ const App = () => {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Find Training Buddy</h2>
-              <button onClick={() => setShowBuddyForm(false)} className="text-gray-400 hover:text-gray-600">✕</button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Your Location</label>
-                <input
-                  type="text"
-                  value={buddyFormData.location}
-                  onChange={(e) => setBuddyFormData(prev => ({ ...prev, location: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="e.g. Melbourne, VIC"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Experience Level</label>
-                <select
-                  value={buddyFormData.experience}
-                  onChange={(e) => setBuddyFormData(prev => ({ ...prev, experience: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="">Select experience level</option>
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Your Goals</label>
-                <textarea
-                  value={buddyFormData.goals}
-                  onChange={(e) => setBuddyFormData(prev => ({ ...prev, goals: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="What are you hoping to achieve?"
-                  rows={3}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Info</label>
-                <input
-                  type="text"
-                  value={buddyFormData.contact}
-                  onChange={(e) => setBuddyFormData(prev => ({ ...prev, contact: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="Email or phone number"
-                />
-              </div>
-            </div>
-            <div className="flex space-x-3 mt-6">
-              <button onClick={() => setShowBuddyForm(false)} className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
-                Cancel
-              </button>
-              <button
-                onClick={handleBuddyPost}
-                disabled={!buddyFormData.location || !buddyFormData.experience || !buddyFormData.goals || !buddyFormData.contact}
-                className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
-              >
-                Post to Board
-              </button>
-            </div>
-          </div>
+          <BuddyForm
+            userName={user.name}
+            currentDay={user.currentDay}
+            onSubmit={handleBuddyPost}
+            onCancel={() => setShowBuddyForm(false)}
+          />
         </div>
       </div>
     );
