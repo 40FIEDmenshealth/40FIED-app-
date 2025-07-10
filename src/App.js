@@ -237,12 +237,34 @@ const App = () => {
   }, [isLoggedIn]);
 
   const loadBuddyPosts = () => {
-    // Clear any existing fake data from localStorage
-    localStorage.removeItem('buddy_posts');
-    
-    // Always start with empty buddy board - no fake/example posts
-    setBuddyPosts([]);
-    localStorage.setItem('buddy_posts', JSON.stringify([]));
+    const savedPosts = localStorage.getItem('buddy_posts');
+    if (savedPosts) {
+      const posts = JSON.parse(savedPosts);
+      // Only clear if we detect the old fake posts by checking for specific fake emails
+      const hasFakePosts = posts.some(post => 
+        post.contact === 'mike.t@email.com' || 
+        post.contact === 'dave.runner@email.com' || 
+        post.contact === 'jkennedy@email.com'
+      );
+      
+      if (hasFakePosts) {
+        // Remove only the fake posts, keep real ones
+        const realPosts = posts.filter(post => 
+          post.contact !== 'mike.t@email.com' && 
+          post.contact !== 'dave.runner@email.com' && 
+          post.contact !== 'jkennedy@email.com'
+        );
+        setBuddyPosts(realPosts);
+        localStorage.setItem('buddy_posts', JSON.stringify(realPosts));
+      } else {
+        // All posts are real, keep them
+        setBuddyPosts(posts);
+      }
+    } else {
+      // No saved posts, start empty
+      setBuddyPosts([]);
+      localStorage.setItem('buddy_posts', JSON.stringify([]));
+    }
   };
 
   const loadUserData = (email) => {
