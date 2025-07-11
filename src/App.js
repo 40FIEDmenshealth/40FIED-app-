@@ -1,14 +1,9 @@
 import React, { useState, useEffect, memo } from 'react';
-import { Calendar, Plus, Check, User, Home, Users, Youtube, Facebook, BookOpen, Dumbbell, Eye, UserPlus, MapPin, Clock } from 'lucide-react';
+import { Calendar, Plus, Check, User, Home, Users, Youtube, Facebook, BookOpen, Dumbbell, UserPlus, MapPin, Clock } from 'lucide-react';
 
-// Separate memoized components for forms
 const EmailForm = memo(({ onSubmit }) => {
   const [email, setEmail] = useState('');
   
-  const handleSubmit = () => {
-    onSubmit(email);
-  };
-
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -26,71 +21,15 @@ const EmailForm = memo(({ onSubmit }) => {
           onChange={(e) => setEmail(e.target.value)}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
           placeholder="your.email@example.com"
-          autoComplete="email"
         />
       </div>
       <button
-        onClick={handleSubmit}
+        onClick={() => onSubmit(email)}
         disabled={!email || !email.includes('@')}
         className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
       >
         Continue
       </button>
-    </div>
-  );
-});
-
-const NameForm = memo(({ email, onSubmit, onBack }) => {
-  const [name, setName] = useState('');
-  
-  const handleSubmit = () => {
-    onSubmit(name);
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-          <User className="w-8 h-8 text-white" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
-        <p className="text-gray-600">You're new here! Let's get you set up.</p>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-        <input 
-          type="email" 
-          value={email} 
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" 
-          disabled 
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-          placeholder="Enter your first name"
-          autoComplete="given-name"
-        />
-      </div>
-      <div className="flex space-x-3">
-        <button 
-          onClick={onBack} 
-          className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-        >
-          Back
-        </button>
-        <button
-          onClick={handleSubmit}
-          disabled={!name.trim()}
-          className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
-        >
-          Start Challenge
-        </button>
-      </div>
     </div>
   );
 });
@@ -102,14 +41,6 @@ const BuddyForm = memo(({ userName, currentDay, onSubmit, onCancel, editingPost 
     goals: editingPost?.goals || '',
     contact: editingPost?.contact || ''
   });
-
-  const handleSubmit = () => {
-    onSubmit({
-      ...formData,
-      name: editingPost?.name || userName,
-      day: editingPost?.day || currentDay
-    });
-  };
 
   const updateField = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -125,14 +56,6 @@ const BuddyForm = memo(({ userName, currentDay, onSubmit, onCancel, editingPost 
         </h2>
         <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">✕</button>
       </div>
-      
-      {editingPost && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-700">
-            <strong>Editing post by:</strong> {editingPost.name} (Day {editingPost.day})
-          </p>
-        </div>
-      )}
       
       <div className="space-y-4">
         <div>
@@ -180,18 +103,108 @@ const BuddyForm = memo(({ userName, currentDay, onSubmit, onCancel, editingPost 
         </div>
       </div>
       <div className="flex space-x-3 mt-6">
-        <button
-          onClick={onCancel}
-          className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-        >
+        <button onClick={onCancel} className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
           Cancel
         </button>
         <button
-          onClick={handleSubmit}
+          onClick={() => onSubmit({
+            ...formData,
+            name: editingPost?.name || userName,
+            day: editingPost?.day || currentDay
+          })}
           disabled={!isValid}
           className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
         >
           {editingPost ? 'Update Post' : 'Post to Board'}
+        </button>
+      </div>
+    </div>
+  );
+});
+
+const VictoryForm = memo(({ onSubmit, onCancel }) => {
+  const [victory, setVictory] = useState('');
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl max-w-md w-full p-6">
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Log Your Victory! 🏆</h2>
+          <p className="text-gray-600">What did you accomplish today? Every win counts!</p>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Today's Victory</label>
+            <textarea
+              value={victory}
+              onChange={(e) => setVictory(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              placeholder="e.g., Completed my workout even though I was tired!"
+              rows={3}
+            />
+          </div>
+          
+          <div className="flex space-x-3">
+            <button
+              onClick={onCancel}
+              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => onSubmit(victory)}
+              disabled={!victory.trim()}
+              className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-emerald-600 transition-colors font-medium disabled:opacity-50"
+            >
+              Log Victory
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+const NameForm = memo(({ email, onSubmit, onBack }) => {
+  const [name, setName] = useState('');
+  
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <User className="w-8 h-8 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
+        <p className="text-gray-600">You're new here! Let's get you set up.</p>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+        <input type="email" value={email} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" disabled />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+          placeholder="Enter your first name"
+        />
+      </div>
+      <div className="flex space-x-3">
+        <button onClick={onBack} className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+          Back
+        </button>
+        <button
+          onClick={() => onSubmit(name)}
+          disabled={!name.trim()}
+          className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-colors font-medium disabled:opacity-50"
+        >
+          Start Challenge
         </button>
       </div>
     </div>
@@ -206,12 +219,15 @@ const App = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [loginStep, setLoginStep] = useState('email');
   const [loginEmail, setLoginEmail] = useState('');
+  const [celebrations, setCelebrations] = useState([]);
+  const [showVictoryForm, setShowVictoryForm] = useState(false);
+  const [victories, setVictories] = useState([]);
+  const [coachingNudge, setCoachingNudge] = useState(null);
   const [showBuddyForm, setShowBuddyForm] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
+  const [buddyPosts, setBuddyPosts] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
-  const [buddyPosts, setBuddyPosts] = useState([]);
-  const [celebrations, setCelebrations] = useState([]);
   const [user, setUser] = useState({
     name: '',
     email: '',
@@ -221,31 +237,77 @@ const App = () => {
   });
 
   useEffect(() => {
-    const savedUser = JSON.parse(localStorage.getItem('fortified_user') || '{}');
-    if (savedUser.email) {
-      setUser(savedUser);
-      setIsLoggedIn(true);
-      setIsAdmin(savedUser.email === 'coach@40fied.com' || savedUser.email === 'admin@40fied.com');
-      loadUserData(savedUser.email);
+    const demoUser = {
+      name: 'Demo User',
+      email: 'demo@40fied.com',
+      streak: 5,
+      currentDay: 6,
+      joinDate: new Date().toISOString()
+    };
+    setUser(demoUser);
+    setIsLoggedIn(true);
+    setIsAdmin(demoUser.email === 'coach@40fied.com' || demoUser.email === 'admin@40fied.com');
+    
+    const demoChain = Array.from({ length: 40 }, (_, index) => ({
+      id: index + 1,
+      type: index < 5 ? 'completed' : 'empty',
+      date: index < 5 ? new Date().toISOString().split('T')[0] : null,
+      activity: index < 5 ? 'Workout Complete' : `Day ${index + 1}`,
+      isEmpty: index >= 5
+    }));
+    setChain(demoChain);
+    
+    // Initialize empty buddy posts - no fake profiles
+    setBuddyPosts([]);
+
+    setCelebrations([
+      {
+        id: 1,
+        type: '40day',
+        userName: 'Mike Thompson',
+        date: '2025-07-08',
+        isNew: false
+      },
+      {
+        id: 2,
+        type: '20day',
+        userName: 'Lisa Chen',
+        date: '2025-07-09',
+        isNew: false
+      }
+    ]);
+
+    // Initialize demo victories
+    setVictories([
+      {
+        id: 1,
+        victory: 'Completed my first workout in months!',
+        date: '2025-07-10',
+        day: 1
+      },
+      {
+        id: 2,
+        victory: 'Woke up 30 minutes earlier to fit in exercise',
+        date: '2025-07-11',
+        day: 2
+      }
+    ]);
+
+    // Set coaching nudge based on day
+    const nudges = {
+      3: "🎯 Day 3 is crucial! You're building the neural pathways that create lasting habits. Each rep matters!",
+      7: "🔥 One full week! Your body is adapting and your discipline is strengthening. This is where champions are made!",
+      14: "💪 Two weeks strong! You're officially in the habit-formation zone. Your future self is thanking you!",
+      20: "🏆 HALFWAY CHAMPION! 20 days of consistency. You've proven you can do hard things!",
+      30: "🚀 30 days! You're in the final stretch. The finish line is calling your name!",
+      35: "⚡ Only 5 more days! You can taste victory. Champions finish what they start!",
+      40: "🏆 LEGENDARY! You've completed the 40FIED challenge. You are now officially 40FIED!"
+    };
+
+    if (nudges[demoUser.currentDay]) {
+      setCoachingNudge(nudges[demoUser.currentDay]);
     }
-    loadBuddyPosts();
-    loadCelebrations();
   }, []);
-
-  useEffect(() => {
-    if (!isLoggedIn) {
-      setShowLogin(true);
-    }
-  }, [isLoggedIn]);
-
-  const loadCelebrations = () => {
-    const savedCelebrations = localStorage.getItem('celebrations');
-    if (savedCelebrations) {
-      setCelebrations(JSON.parse(savedCelebrations));
-    } else {
-      setCelebrations([]);
-    }
-  };
 
   const addCelebration = (type, userName) => {
     const newCelebration = {
@@ -255,71 +317,12 @@ const App = () => {
       date: new Date().toISOString(),
       isNew: true
     };
-    
-    const updatedCelebrations = [newCelebration, ...celebrations];
-    setCelebrations(updatedCelebrations);
-    localStorage.setItem('celebrations', JSON.stringify(updatedCelebrations));
-  };
-
-  const loadBuddyPosts = () => {
-    const savedPosts = localStorage.getItem('buddy_posts');
-    if (savedPosts) {
-      const posts = JSON.parse(savedPosts);
-      const hasFakePosts = posts.some(post => 
-        post.contact === 'mike.t@email.com' || 
-        post.contact === 'dave.runner@email.com' || 
-        post.contact === 'jkennedy@email.com'
-      );
-      
-      if (hasFakePosts) {
-        const realPosts = posts.filter(post => 
-          post.contact !== 'mike.t@email.com' && 
-          post.contact !== 'dave.runner@email.com' && 
-          post.contact !== 'jkennedy@email.com'
-        );
-        setBuddyPosts(realPosts);
-        localStorage.setItem('buddy_posts', JSON.stringify(realPosts));
-      } else {
-        setBuddyPosts(posts);
-      }
-    } else {
-      setBuddyPosts([]);
-      localStorage.setItem('buddy_posts', JSON.stringify([]));
-    }
-  };
-
-  const loadUserData = (email) => {
-    const savedChain = localStorage.getItem(`fortified_chain_${email}`);
-    if (savedChain) {
-      setChain(JSON.parse(savedChain));
-    } else {
-      initializeChain();
-    }
-  };
-
-  const initializeChain = () => {
-    const emptyChain = Array.from({ length: 40 }, (_, index) => ({
-      id: index + 1,
-      type: 'empty',
-      date: null,
-      activity: `Day ${index + 1}`,
-      isEmpty: true
-    }));
-    setChain(emptyChain);
+    setCelebrations([newCelebration, ...celebrations]);
   };
 
   const handleEmailSubmit = (email) => {
     setLoginEmail(email);
-    const existingUser = localStorage.getItem(`user_profile_${email}`);
-    if (existingUser) {
-      const userData = JSON.parse(existingUser);
-      setUser(userData);
-      setIsLoggedIn(true);
-      setShowLogin(false);
-      loadUserData(email);
-    } else {
-      setLoginStep('register');
-    }
+    setLoginStep('register');
   };
 
   const handleNameSubmit = (name) => {
@@ -331,6 +334,7 @@ const App = () => {
       joinDate: new Date().toISOString()
     };
     
+    // Add to all users list for admin tracking
     const allUsers = JSON.parse(localStorage.getItem('all_users') || '[]');
     allUsers.push({
       ...newUser,
@@ -341,11 +345,18 @@ const App = () => {
     
     setUser(newUser);
     setIsAdmin(loginEmail === 'coach@40fied.com' || loginEmail === 'admin@40fied.com');
-    localStorage.setItem('fortified_user', JSON.stringify(newUser));
-    localStorage.setItem(`user_profile_${loginEmail}`, JSON.stringify(newUser));
     setIsLoggedIn(true);
     setLoginStep('welcome');
-    initializeChain();
+    
+    const emptyChain = Array.from({ length: 40 }, (_, index) => ({
+      id: index + 1,
+      type: 'empty',
+      date: null,
+      activity: `Day ${index + 1}`,
+      isEmpty: true
+    }));
+    setChain(emptyChain);
+    
     setTimeout(() => {
       setShowLogin(false);
       setLoginStep('email');
@@ -359,49 +370,7 @@ const App = () => {
     setChain([]);
     setTodayCompleted(new Set());
     setLoginEmail('');
-    localStorage.removeItem('fortified_user');
     setShowLogin(true);
-  };
-
-  const handleBuddyPost = (postData) => {
-    if (editingPost) {
-      const updatedPosts = buddyPosts.map(post => 
-        post.id === editingPost.id 
-          ? { ...editingPost, ...postData, date: new Date().toISOString().split('T')[0] }
-          : post
-      );
-      setBuddyPosts(updatedPosts);
-      localStorage.setItem('buddy_posts', JSON.stringify(updatedPosts));
-      setEditingPost(null);
-    } else {
-      const newPost = {
-        id: Date.now(),
-        name: postData.name,
-        location: postData.location,
-        experience: postData.experience,
-        goals: postData.goals,
-        contact: postData.contact,
-        date: new Date().toISOString().split('T')[0],
-        day: postData.day
-      };
-      const updatedPosts = [newPost, ...buddyPosts];
-      setBuddyPosts(updatedPosts);
-      localStorage.setItem('buddy_posts', JSON.stringify(updatedPosts));
-    }
-    setShowBuddyForm(false);
-  };
-
-  const handleEditPost = (post) => {
-    setEditingPost(post);
-    setShowBuddyForm(true);
-  };
-
-  const handleDeletePost = (postId) => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      const updatedPosts = buddyPosts.filter(post => post.id !== postId);
-      setBuddyPosts(updatedPosts);
-      localStorage.setItem('buddy_posts', JSON.stringify(updatedPosts));
-    }
   };
 
   const markUserAsViewed = (userEmail) => {
@@ -415,6 +384,48 @@ const App = () => {
   const getNewUsersCount = () => {
     const allUsers = JSON.parse(localStorage.getItem('all_users') || '[]');
     return allUsers.filter(user => user.isNew).length;
+  };
+
+  const handleBuddyPost = (postData) => {
+    if (editingPost) {
+      const updatedPosts = buddyPosts.map(post => 
+        post.id === editingPost.id 
+          ? { ...editingPost, ...postData, date: new Date().toISOString().split('T')[0] }
+          : post
+      );
+      setBuddyPosts(updatedPosts);
+      setEditingPost(null);
+    } else {
+      const newPost = {
+        id: Date.now(),
+        ...postData,
+        date: new Date().toISOString().split('T')[0],
+      };
+      setBuddyPosts([newPost, ...buddyPosts]);
+    }
+    setShowBuddyForm(false);
+  };
+
+  const handleEditPost = (post) => {
+    setEditingPost(post);
+    setShowBuddyForm(true);
+  };
+
+  const handleDeletePost = (postId) => {
+    if (window.confirm('Are you sure you want to delete this post?')) {
+      setBuddyPosts(buddyPosts.filter(post => post.id !== postId));
+    }
+  };
+
+  const handleVictorySubmit = (victoryText) => {
+    const newVictory = {
+      id: Date.now(),
+      victory: victoryText,
+      date: new Date().toISOString().split('T')[0],
+      day: user.currentDay
+    };
+    setVictories([newVictory, ...victories]);
+    setShowVictoryForm(false);
   };
 
   const completeWorkout = () => {
@@ -431,7 +442,6 @@ const App = () => {
           isEmpty: false
         };
         setChain(updatedChain);
-        localStorage.setItem(`fortified_chain_${user.email}`, JSON.stringify(updatedChain));
         
         const newCurrentDay = user.currentDay + 1;
         const newStreak = user.streak + 1;
@@ -442,16 +452,13 @@ const App = () => {
           addCelebration('40day', user.name);
         }
         
-        const updatedUser = { ...user, currentDay: newCurrentDay, streak: newStreak };
-        setUser(updatedUser);
-        localStorage.setItem('fortified_user', JSON.stringify(updatedUser));
+        setUser({ ...user, currentDay: newCurrentDay, streak: newStreak });
       }
     }
   };
 
   const activityTypes = {
     completed: { color: 'bg-green-500', icon: Check },
-    missed: { color: 'bg-red-500', icon: Eye },
     empty: { color: 'bg-gray-200 border-2 border-gray-300 border-dashed', icon: Plus }
   };
 
@@ -560,9 +567,7 @@ const App = () => {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-xl max-w-md w-full p-6">
-          {loginStep === 'email' && (
-            <EmailForm onSubmit={handleEmailSubmit} />
-          )}
+          {loginStep === 'email' && <EmailForm onSubmit={handleEmailSubmit} />}
           {loginStep === 'register' && (
             <NameForm 
               email={loginEmail}
@@ -590,31 +595,13 @@ const App = () => {
     );
   };
 
-  const BuddyFormModal = () => {
-    if (!showBuddyForm) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-          <BuddyForm
-            userName={user.name}
-            currentDay={user.currentDay}
-            editingPost={editingPost}
-            onSubmit={handleBuddyPost}
-            onCancel={() => {
-              setShowBuddyForm(false);
-              setEditingPost(null);
-            }}
-          />
-        </div>
-      </div>
-    );
-  };
-
   const HomeView = () => {
-    const allUsers = JSON.parse(localStorage.getItem('all_users') || '[]');
-    const totalUsers = allUsers.length;
     const recentCelebrations = celebrations.slice(0, 3);
+    const recentVictories = victories.slice(0, 3);
+    
+    // Community stats - real data only
+    const recentStarters = []; // Will be populated by real user registrations
+    const recentCompleters = []; // Will be populated by real completions
     
     return (
       <div className="space-y-6">
@@ -623,11 +610,103 @@ const App = () => {
           <div className="relative">
             <h2 className="text-2xl font-bold mb-2">Welcome back, {user.name}!</h2>
             <p className="opacity-90">40 workouts in 40 days - build your strength and resilience</p>
-            {totalUsers > 1 && (
-              <div className="mt-3 bg-white/20 rounded-lg px-3 py-2 inline-block">
-                <p className="text-sm font-medium">💪 Join {totalUsers} members crushing their goals!</p>
+            <div className="mt-3 bg-white/20 rounded-lg px-3 py-2 inline-block">
+              <p className="text-sm font-medium">💪 Join 5 members crushing their goals!</p>
+            </div>
+          </div>
+        </div>
+
+        {coachingNudge && (
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 text-white border-2 border-purple-300 shadow-lg">
+            <div className="flex items-center space-x-3">
+              <div className="text-3xl">🎯</div>
+              <div>
+                <h4 className="font-bold text-lg mb-1">Coach's Corner</h4>
+                <p className="text-sm opacity-95">{coachingNudge}</p>
               </div>
-            )}
+            </div>
+          </div>
+        )}
+
+        {recentVictories.length > 0 && (
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                🏆 Recent Victories
+              </h3>
+              <button
+                onClick={() => setShowVictoryForm(true)}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-emerald-600 transition-colors font-medium text-sm"
+              >
+                Log Victory
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              {recentVictories.map((victory) => (
+                <div key={victory.id} className="bg-green-50 rounded-lg p-3 border border-green-200">
+                  <p className="text-green-800 font-medium text-sm">"{victory.victory}"</p>
+                  <p className="text-green-600 text-xs mt-1">Day {victory.day} • {new Date(victory.date).toLocaleDateString()}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">📊 Community Tally</h3>
+          
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <div className="text-2xl font-bold text-blue-600">{recentStarters.length}</div>
+              <div className="text-sm text-blue-700">Fresh Starters</div>
+              <div className="text-xs text-blue-600 mt-1">Last 7 days</div>
+            </div>
+            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+              <div className="text-2xl font-bold text-yellow-600">{recentCompleters.length}</div>
+              <div className="text-sm text-yellow-700">Completions</div>
+              <div className="text-xs text-yellow-600 mt-1">This month</div>
+            </div>
+          </div>
+
+          {recentStarters.length > 0 || recentCompleters.length > 0 ? (
+            <div className="space-y-3">
+              {recentStarters.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-gray-700 text-sm mb-2">🌟 Recently Started:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {recentStarters.map((name, index) => (
+                      <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {recentCompleters.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-gray-700 text-sm mb-2">🏆 Recently Completed:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {recentCompleters.map((name, index) => (
+                      <span key={index} className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-gray-500 text-sm">Be the first to start your 40FIED journey!</p>
+            </div>
+          )}
+
+          <div className="mt-4 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
+            <p className="text-orange-800 text-sm font-medium text-center">
+              💪 Join a growing community committed to lasting change!
+            </p>
           </div>
         </div>
 
@@ -761,7 +840,7 @@ const App = () => {
         {celebrations.length > 0 && (
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <h3 className="font-semibold text-lg mb-4">🏆 Hall of Fame</h3>
-            <div className="space-y-3 max-h-64 overflow-y-auto">
+            <div className="space-y-3">
               {celebrations.map((celebration) => (
                 <div key={celebration.id} className={`p-3 rounded-lg border-l-4 ${
                   celebration.type === '40day' 
@@ -773,9 +852,7 @@ const App = () => {
                       {celebration.type === '40day' ? '🏆' : '🔥'}
                     </span>
                     <div>
-                      <p className="font-bold text-gray-900">
-                        {celebration.userName}
-                      </p>
+                      <p className="font-bold text-gray-900">{celebration.userName}</p>
                       <p className="text-sm text-gray-600">
                         {celebration.type === '40day' 
                           ? 'Completed the 40FIED Challenge!' 
@@ -789,11 +866,6 @@ const App = () => {
                   </div>
                 </div>
               ))}
-            </div>
-            <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <p className="text-orange-800 text-sm font-medium">
-                💪 If they can do it, so can you! Your name could be here next!
-              </p>
             </div>
           </div>
         )}
@@ -834,7 +906,7 @@ const App = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {buddyPosts.slice(0, 10).map((post) => (
+              {buddyPosts.map((post) => (
                 <div key={post.id} className="border border-gray-200 rounded-lg p-4 hover:border-orange-300 transition-colors">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3">
@@ -868,46 +940,17 @@ const App = () => {
                   
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">Posted {new Date(post.date).toLocaleDateString()}</span>
-                    <div className="flex items-center space-x-2">
-                      {isAdmin && (
-                        <>
-                          <button 
-                            onClick={() => handleEditPost(post)}
-                            className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors"
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            onClick={() => handleDeletePost(post.id)}
-                            className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 transition-colors"
-                          >
-                            Delete
-                          </button>
-                        </>
-                      )}
-                      <button 
-                        onClick={() => window.open(`mailto:${post.contact}?subject=40FIED Training Buddy&body=Hi ${post.name}, I saw your post on the 40FIED buddy board and would love to connect!`, '_blank')}
-                        className="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600 transition-colors"
-                      >
-                        Connect
-                      </button>
-                    </div>
+                    <button 
+                      onClick={() => window.open(`mailto:${post.contact}?subject=40FIED Training Buddy&body=Hi ${post.name}, I saw your post on the 40FIED buddy board and would love to connect!`, '_blank')}
+                      className="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600 transition-colors"
+                    >
+                      Connect
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="font-semibold text-lg mb-4">Success Stories</h3>
-          <div className="text-center py-8">
-            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Users className="w-6 h-6 text-gray-400" />
-            </div>
-            <p className="text-gray-600 mb-2">Success stories will appear here</p>
-            <p className="text-gray-500 text-sm">Real member achievements and testimonials from the 40FIED community</p>
-          </div>
         </div>
       </div>
     );
@@ -1072,8 +1115,28 @@ const App = () => {
       )}
 
       <LoginSystem />
-      <BuddyFormModal />
-      <AdminPanel />
+      {showVictoryForm && (
+        <VictoryForm
+          onSubmit={handleVictorySubmit}
+          onCancel={() => setShowVictoryForm(false)}
+        />
+      )}
+      {showBuddyForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <BuddyForm
+              userName={user.name}
+              currentDay={user.currentDay}
+              editingPost={editingPost}
+              onSubmit={handleBuddyPost}
+              onCancel={() => {
+                setShowBuddyForm(false);
+                setEditingPost(null);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
