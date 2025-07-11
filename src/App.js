@@ -246,7 +246,7 @@ const App = () => {
     };
     setUser(demoUser);
     setIsLoggedIn(true);
-    setIsAdmin(demoUser.email === 'coach@40fied.com' || demoUser.email === 'admin@40fied.com');
+    setIsAdmin(demoUser.email === '40fiedmenshealth@gmail.com');
     
     const demoChain = Array.from({ length: 40 }, (_, index) => ({
       id: index + 1,
@@ -344,7 +344,7 @@ const App = () => {
     localStorage.setItem('all_users', JSON.stringify(allUsers));
     
     setUser(newUser);
-    setIsAdmin(loginEmail === 'coach@40fied.com' || loginEmail === 'admin@40fied.com');
+    setIsAdmin(loginEmail === '40fiedmenshealth@gmail.com');
     setIsLoggedIn(true);
     setLoginStep('welcome');
     
@@ -940,12 +940,30 @@ const App = () => {
                   
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">Posted {new Date(post.date).toLocaleDateString()}</span>
-                    <button 
-                      onClick={() => window.open(`mailto:${post.contact}?subject=40FIED Training Buddy&body=Hi ${post.name}, I saw your post on the 40FIED buddy board and would love to connect!`, '_blank')}
-                      className="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600 transition-colors"
-                    >
-                      Connect
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      {isAdmin && (
+                        <>
+                          <button 
+                            onClick={() => handleEditPost(post)}
+                            className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            onClick={() => handleDeletePost(post.id)}
+                            className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                      <button 
+                        onClick={() => window.open(`mailto:${post.contact}?subject=40FIED Training Buddy&body=Hi ${post.name}, I saw your post on the 40FIED buddy board and would love to connect!`, '_blank')}
+                        className="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600 transition-colors"
+                      >
+                        Connect
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1137,6 +1155,7 @@ const App = () => {
           </div>
         </div>
       )}
+      <AdminPanel />
     </div>
   );
 };
